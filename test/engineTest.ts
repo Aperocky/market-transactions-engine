@@ -13,12 +13,8 @@ describe("MarketTransactionEngine", () => {
         engine.addOrders([order1, order2]);
         assert(engine.orders.has(order1.orderId));
         assert(engine.orders.has(order2.orderId));
-        assert(engine.ordersByResource.has("Rice"));
-        expect(engine.ordersByResource.size).to.equal(1);
-        expect(engine.ordersByResource.get("Rice").length).to.equal(2);
         engine.addOrders([order3]);
-        expect(engine.ordersByResource.size).to.equal(2);
-        expect(engine.ordersByResource.get("Bread").length).to.equal(1);
+        expect(engine.orders.size).to.equal(3);
     });
 
     it("Test simplest happy case for market", () => {
@@ -26,7 +22,8 @@ describe("MarketTransactionEngine", () => {
         let order1 = new Order("Rice", true, 1, 1);
         let order2 = new Order("Rice", false, 1, 1);
         engine.addOrders([order1, order2]);
-        let results = engine.processOrders();
+        engine.processOrders();
+        let results = engine.getOrders();
         let checkState = (order) => {
             assert(order.delivered);
             expect(order.quantityFulfilled).to.equal(1);
@@ -44,7 +41,8 @@ describe("MarketTransactionEngine", () => {
         let order1 = new Order("Rice", true, 1, 1);
         let order2 = new Order("Rice", false, 1, 1.5);
         engine.addOrders([order1, order2]);
-        let results = engine.processOrders();
+        engine.processOrders();
+        let results = engine.getOrders();
         let checkState = (order) => {
             assert(order.delivered);
             expect(order.quantityFulfilled).to.equal(1);
@@ -64,7 +62,8 @@ describe("MarketTransactionEngine", () => {
         let order2 = new Order("Rice", true, 1.1, 1);
         let order3 = new Order("Rice", false, 1, 1.5);
         engine.addOrders([order1, order2, order3]);
-        let results = engine.processOrders();
+        engine.processOrders();
+        let results = engine.getOrders();
         for (const [id, order] of results) {
             assert(order.delivered);
             expect(order.settlePrice).to.equal(1.1);
@@ -93,7 +92,7 @@ describe("MarketTransactionEngine", () => {
         }
         engine.addOrders(buyOrders);
         engine.addOrders([sellOrder])
-        let results = engine.processOrders();
+        engine.processOrders();
         let riceReport = engine.getData().get("Rice");
         expect(riceReport["actualPrice"]).to.equal(1);
         let sumVolume = 0;
@@ -121,7 +120,7 @@ describe("MarketTransactionEngine", () => {
             orders.push(randomOrders());
         }
         engine.addOrders(orders);
-        let results = engine.processOrders();
+        engine.processOrders();
         let stuffGain = 0;
         let moneyGain = 0;
         for (const order of orders) {
@@ -136,5 +135,55 @@ describe("MarketTransactionEngine", () => {
         }
         expect(stuffGain).to.be.closeTo(0, 0.00001);
         expect(moneyGain).to.be.closeTo(0, 0.00001);
+    });
+
+    it("test market reset base case", () => {
+        let engine = new MarketTransactionsEngine();
+        let order1 = new Order("Rice", true, 1.2, 1);
+        let order2 = new Order("Rice", true, 1.1, 1);
+        let order3 = new Order("Rice", false, 1, 1.5);
+        engine.addOrders([order1, order2, order3]);
+        engine.processOrders();
+        engine.resetMarket();
+        expect(engine.orders.size).to.equal(0);
+        expect(engine.data.size).to.equal(0);
+    });
+
+    it("test market reset keeping unfilled orders", () => {
+        let engine = new MarketTransactionsEngine();
+        let randomOrders = () => {
+            return new Order("Stuff", Math.random() > 0.5 ? true : false, Math.random(), Math.random());
+        };
+        let orders = [];
+        for (let i = 0; i < 50; i++) {
+            orders.push(randomOrders());
+        }
+        engine.addOrders(orders);
+        engine.processOrders();
+        let stuffData = engine.getData().get("Stuff");
+        let unfilledOrdersCount = stuffData["sellOrdersCount"] + stuffData["buyOrdersCount"]
+                - stuffData["sellOrdersDelivered"] - stuffData["buyOrdersDelivered"];
+        let unfilledOrders = orders.filter(o => !o.delivered);
+        expect(unfilledOrders.length).to.equal(unfilledOrdersCount);
+        expect(engine.orders.size).to.equal(orders.length);
+        engine.resetMarket(true);
+        expect(engine.orders.size).to.equal(unfilledOrdersCount);
+    });
+
+    it("test multiple resources in market", () => {
+        let engine = new MarketTransactionsEngine();
+        let randomRiceOrders = () => {
+            return new Order("Rice", Math.random() > 0.5 ? true : false, Math.random() + 1, Math.random() + 1);
+        };
+        let randomMeatOrders = () => {
+            return new Order("Meat", Math.random() > 0.5 ? true : false, Math.random()*5 + 5, Math.random() + 0.5);
+        };
+        engine.addOrders([...Array(50)].map(e => randomRiceOrders()));
+        engine.addOrders([...Array(40)].map(e => randomMeatOrders()));
+        engine.processOrders();
+        let report = engine.getData();
+        assert(report.has("Meat"));
+        assert(report.has("Rice"));
+        expect(report.get("Meat")["actualPrice"]).to.be.above(report.get("Rice")["actualPrice"]);
     });
 });

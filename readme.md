@@ -1,10 +1,10 @@
 ## Market Transactions Engine.
 
-A market engine to determine price and fulfill orders based on supply and demands.
+A market engine to determine price and fulfill orders based on supply and demand. This is designed for utilization as an embedded market engine in discrete simulations/games.
 
 ### How it works
 
-The market is simulated by discrete `Order`s, which takes this form:
+The market is simulated by discrete `Order`, which takes this form:
 
     interface Order {
         orderId: string;
@@ -19,12 +19,14 @@ The market is simulated by discrete `Order`s, which takes this form:
         quantityFulfilled?: number;
     }
 
-Market engine takes a list of above orders, and process them at once, filling the orders with the highest buy price and lowest sell price until the prices meet. Orders are then delivered, with settlePrice and quantityFulfilled parameter in terms of an half filled order.
+Market engine takes a list of above orders, and process them at once, filling the orders with the highest buy price and lowest sell price until the prices meet.
+
+`Order` are updated in place, hence they may be controlled by other entities instead of being tied to `MarketTransactionsEngine`.
 
 A very quick example:
 
     let engine = new MarketTransactionsEngine();
-    let order1 = new Order("Rice", true, 1.2, 1); // resource name, buy/sell, unit price, quantity
+    let order1 = new Order("Rice", true, 1.2, 1); // commodity, buy/sell, unit price, quantity
     let order2 = new Order("Rice", true, 1.1, 1);
     let order3 = new Order("Rice", false, 1, 1.5);
     engine.addOrders([order1, order2, order3]);

@@ -15,10 +15,12 @@ export type MarketDataForResource = {
 
 export interface IMarketTransactionsEngine {
 
-    // Adding any orders to the engine
+    // Adding or removing orders to/from market
     addOrders: (orders: IOrder[]) => void;
-    // Map indexes orders by orderId for quick retrieval
-    processOrders: () => Map<string, IOrder>;
+    removeOrders: (orders: IOrder[]) => void;
+    getOrders: () => Map<string, IOrder>;
+    // Updates the order in place, deliver the order if filled.
+    processOrders: () => void;
     // Get metadata about the market
     getData: () => Map<string, MarketDataForResource>;
     // Reset All Orders, optionally keep unfilled orders
@@ -29,57 +31,61 @@ export interface IMarketTransactionsEngine {
 export class MarketTransactionsEngine implements IMarketTransactionsEngine {
 
     orders: Map<string, IOrder>;
-    ordersByResource: Map<string, IOrder[]>;
     data: Map<string, MarketDataForResource>;
 
     constructor() {
         this.orders = new Map();
-        this.ordersByResource = new Map();
         this.data = new Map();
     }
 
     addOrders(orders: IOrder[]): void {
         for (const order of orders) {
-            let resourceName = order.resourceName;
             this.orders.set(order.orderId, order);
-            if (this.ordersByResource.has(resourceName)) {
-                this.ordersByResource.get(resourceName).push(order);
-            } else {
-                this.ordersByResource.set(resourceName, [order]);
-            }
         }
     }
 
-    processOrders(): Map<string, IOrder> {
-        for (const [resourceName, resourceOrders] of this.ordersByResource) {
+    removeOrders(orders: IOrder[]): void {
+        for (const order of orders) {
+            this.orders.delete(order.orderId);
+        }
+    }
+
+    getOrders(): Map<string, IOrder> {
+        return this.orders;
+    }
+
+    processOrders(): void {
+        let ordersByResource: Map<string, IOrder[]> = new Map();
+        for (const order of this.orders.values()) {
+            let resourceName = order.resourceName;
+            if (ordersByResource.has(resourceName)) {
+                ordersByResource.get(resourceName).push(order);
+            } else {
+                ordersByResource.set(resourceName, [order]);
+            }
+        }
+        for (const [resourceName, resourceOrders] of ordersByResource) {
             let resourceMarketData = this.processResourceOrder(resourceOrders);
             this.data.set(resourceName, resourceMarketData);
         }
-        return this.orders;
     }
 
     getData(): Map<string, MarketDataForResource> {
         return this.data;
     }
 
-    resetMarket(keepUnfilledOrders) {
+    resetMarket(keepUnfilledOrders: boolean = false): void {
         this.data = new Map();
         if (keepUnfilledOrders) {
-            for (const [resource, orders] of this.ordersByResource) {
-                let fulfilledOrders = orders.filter(order => order.delivered);
-                for (const order of fulfilledOrders) {
-                    this.orders.delete(order.orderId);
-                }
-                let unfilledOrders = orders.filter(order => !order.delivered);
-                if (unfilledOrders.length == 0) {
-                    this.ordersByResource.delete(resource);
-                } else {
-                    this.ordersByResource.set(resource, unfilledOrders);
+            let filledOrders = [];
+            for (const order of this.orders.values()) {
+                if (order.delivered) {
+                    filledOrders.push(order);
                 }
             }
+            this.removeOrders(filledOrders);
         } else {
             this.orders = new Map();
-            this.ordersByResource = new Map();
         }
     }
 
@@ -157,16 +163,16 @@ export class MarketTransactionsEngine implements IMarketTransactionsEngine {
             }
             // Get next order
             if (currentSoldQuantity > currentBoughtQuantity) {
-                if (buyOrders.length == 0) { 
+                if (buyOrders.length == 0) {
                     finalPrice = currentSellPrice;
-                    break; 
+                    break;
                 }
                 currentBuyOrder = buyOrders.pop();
                 currentBuyPrice = currentBuyOrder.unitPrice;
             } else {
-                if (sellOrders.length == 0) { 
+                if (sellOrders.length == 0) {
                     finalPrice = currentBuyPrice;
-                    break; 
+                    break;
                 }
                 currentSellOrder = sellOrders.pop();
                 currentSellPrice = currentSellOrder.unitPrice;
