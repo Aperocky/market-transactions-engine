@@ -24,7 +24,7 @@ Market engine takes a list of above orders, and process them at once, filling th
 A very quick example:
 
     let engine = new MarketTransactionsEngine();
-    let order1 = new Order("Rice", true, 1.2, 1);
+    let order1 = new Order("Rice", true, 1.2, 1); // resource name, buy/sell, unit price, quantity
     let order2 = new Order("Rice", true, 1.1, 1);
     let order3 = new Order("Rice", false, 1, 1.5);
     engine.addOrders([order1, order2, order3]);
@@ -42,7 +42,7 @@ A very quick example:
       actualPrice: 1.1
     }
 
-    order2 are half filled:
+    // order2 is updated in this process and is half filled per market:
     Order {
       orderId: '25a3877a-fdf1-487c-b2c2-1fb6f97cde3e',
       resourceName: 'Rice',
