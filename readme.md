@@ -1,6 +1,12 @@
 ## Market Transactions Engine.
 
+![NPM Version](https://badge.fury.io/js/market-transactions-engine.svg) &nbsp; ![Unit Test](https://github.com/Aperocky/market-transactions-engine/workflows/Unit%20Tests/badge.svg)
+
+    npm i market-transactions-engine
+
 A market engine to determine price and fulfill orders based on supply and demand. This is designed for utilization as an embedded market engine in discrete simulations/games.
+
+Example simulation: http://prehistoric.tech, [simulation source](https://github.com/Aperocky/prehistoric-simulation)
 
 ### How it works
 
