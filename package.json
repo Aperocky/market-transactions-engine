@@ -1,6 +1,6 @@
 {
   "name": "market-transactions-engine",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "A market transactions engine to take a number of buy and sell orders, determine a price and filling the orders upon supply and demand",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",

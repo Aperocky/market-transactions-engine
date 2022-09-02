@@ -10,6 +10,10 @@ Example simulation: http://prehistoric.tech, [simulation source](https://github.
 
 ### How it works
 
+imports:
+
+    import { Order, MarketTransactionsEngine } from 'market-transactions-engine';
+
 The market is simulated by discrete `Order`, which takes this form:
 
     interface Order {
