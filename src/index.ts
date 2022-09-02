@@ -1,2 +1,6 @@
 export { IOrder, Order } from './market/order';
-export { IMarketTransactionsEngine, MarketTransactionsEngine } from './market/engine';
+export {
+    IMarketTransactionsEngine,
+    MarketTransactionsEngine,
+    MarketDataForResource
+} from './market/engine';
