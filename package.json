@@ -7,7 +7,7 @@
   "scripts": {
     "test": "mocha --require ts-node/register 'test/**/*.ts'",
     "build": "tsc",
-    "clean": "rm -r dist",
+    "clean": "if [ -d 'dist' ]; then rm -rf dist; fi",
     "prepare": "npm run clean && npm run build",
     "prepublishOnly": "npm test"
   },
