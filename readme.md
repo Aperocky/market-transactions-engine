@@ -6,7 +6,7 @@
 
 A market engine to determine price and fulfill orders based on supply and demand. This is designed for utilization as an embedded market engine in discrete simulations/games.
 
-Example simulation: http://prehistoric.tech, [simulation source](https://github.com/Aperocky/prehistoric-simulation)
+Example simulation: https://prehistoric.tech, [simulation source](https://github.com/Aperocky/prehistoric-simulation)
 
 ### How it works
 
